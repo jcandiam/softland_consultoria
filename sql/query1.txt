@@ -1,0 +1,22 @@
+SELECT softland.hwdeseve.CodHw, softland.hwdeseve.FchHrIni, softland.hwdeseve.CodRes, softland.hwdeseve.Descripcion, softland.hweventohlp.CodAux, softland.hweventohlp.CodProd
+FROM     softland.hwdeseve INNER JOIN
+                  softland.hweventohlp ON softland.hwdeseve.CodHw = softland.hweventohlp.CodHw AND softland.hwdeseve.FchHrIni = softland.hweventohlp.FchHrIni AND softland.hwdeseve.CodRes = softland.hweventohlp.CodRes
+WHERE  (softland.hwdeseve.FchHrIni >= '2024-01-01') AND (softland.hwdeseve.Descripcion IS NULL) AND (softland.hweventohlp.CodProd IN ('CW', 'XW', 'PW', 'WP', 'IW', 'OW', 'DE', 'VW', 'NW', 'DW', 'HW', 'MT', 'AW', 'OT', 'SW', 'WI')) OR
+                  (softland.hwdeseve.FchHrIni >= '2024-01-01') AND (CONVERT(varchar(MAX), softland.hwdeseve.Descripcion) NOT IN ('TRASPASO DE HELPDESK', 'se envia encuesta', 'HelpDesk generado desde una llamada telefónica', 
+                  'TRASPASO POR COORDINACION DE VISITA A TERRENO', 'TRASPASO DE HELPDESK POR COLAS DE AUTOATENCIÓN', 'Solicitud de asistencia en Línea desde el Chat de Soporte Vía WEB', 'En revisión', 
+                  'Situación Reportada:
+
+Indicaciones:', 'Situación Reportada:
+
+continuar', 'cliente soluciona', 'Gestión de IA', 'IA CERRADO', 'Se cierra IA', 'Situación Reportada:
+En espera de respuesta del Cliente', 'En revisión.-', 
+                  'Situación Reportada:
+
+Indicaciones:
+contactar cliente', 'realizado', 'Situación Reportada:
+
+sin respuesta cx', 'Situación Reportada:
+
+
+cx con solucion', 'EN REVISION', 'se cierra por solucion de ia', 'Se asocia cliente a IA')) AND 
+                  (softland.hweventohlp.CodProd IN ('CW', 'XW', 'PW', 'WP', 'IW', 'OW', 'DE', 'VW', 'NW', 'DW', 'HW', 'MT', 'AW', 'OT', 'SW', 'WI'))
