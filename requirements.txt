@@ -1,0 +1,5 @@
+pandas
+pyodbc
+scikit-learn
+mlflow
+python-dotenv
