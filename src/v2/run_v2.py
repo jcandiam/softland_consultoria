@@ -1,9 +1,17 @@
-def extract_from_sql():
+import os
+from pathlib import Path
+
+import pandas as pd
+import pyodbc
+from dotenv import load_dotenv
+
+
+def extract_from_sql() -> pd.DataFrame:
     print("Extrayendo datos desde SQL...")
 
-    load_dotenv()
+    load_dotenv()  # carga .env desde la raíz del proyecto
 
-    driver = os.getenv("DB_DRIVER", "").strip()
+    driver = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server").strip()
     server = os.getenv("DB_SERVER", "").strip()
     database = os.getenv("DB_NAME", "").strip()
     user = os.getenv("DB_USER", "").strip()
@@ -41,5 +49,26 @@ def extract_from_sql():
     df = pd.read_sql(query, conn)
     print(f"Registros extraídos: {len(df)}")
     return df
+
+
+def save_dataset(df: pd.DataFrame) -> Path:
+    output_dir = Path("data")
+    output_dir.mkdir(exist_ok=True)
+
+    output_path = output_dir / "dataset_v2.csv"
+    df.to_csv(output_path, index=False, encoding="utf-8-sig")
+
+    print("Dataset guardado en:", output_path)
+    return output_path
+
+
+def main() -> None:
+    df = extract_from_sql()
+    save_dataset(df)
+    print("Pipeline V2 finalizado correctamente.")
+
+
+if __name__ == "__main__":
+    main()
 
 
