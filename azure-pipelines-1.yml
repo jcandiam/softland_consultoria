@@ -1,0 +1,23 @@
+trigger:
+- main
+
+pool:
+  name: Softland Chile Consultoria
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: Install dependencies
+
+- script: |
+    python src/v2/run_v2.py
+  displayName: Run extract
+
+- script: |
+    python src/v2/train_v2.py
+  displayName: Run train
