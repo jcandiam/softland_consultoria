@@ -1,74 +1,64 @@
-import os
-from pathlib import Path
-
 import pandas as pd
-import pyodbc
-from dotenv import load_dotenv
+from pathlib import Path
+import mlflow
+import mlflow.sklearn
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
 
 
-def extract_from_sql() -> pd.DataFrame:
-    print("Extrayendo datos desde SQL...")
-
-    load_dotenv()  # carga .env desde la raíz del proyecto
-
-    driver = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server").strip()
-    server = os.getenv("DB_SERVER", "").strip()
-    database = os.getenv("DB_NAME", "").strip()
-    user = os.getenv("DB_USER", "").strip()
-    password = os.getenv("DB_PASSWORD", "").strip()
-
-    if not driver:
-        raise ValueError("Falta DB_DRIVER en .env (ej: ODBC Driver 18 for SQL Server)")
-    if not server:
-        raise ValueError("Falta DB_SERVER en .env")
-    if not database:
-        raise ValueError("Falta DB_NAME en .env")
-    if not user:
-        raise ValueError("Falta DB_USER en .env")
-    if not password:
-        raise ValueError("Falta DB_PASSWORD en .env")
-
-    conn_str = (
-        f"DRIVER={{{driver}}};"
-        f"SERVER={server};"
-        f"DATABASE={database};"
-        f"UID={user};"
-        f"PWD={password};"
-        "Encrypt=yes;"
-        "TrustServerCertificate=yes;"
-        "Connection Timeout=60;"
-    )
-
-    conn = pyodbc.connect(conn_str, autocommit=True)
-    conn.timeout = 120
-    print("Conectado OK a", database)
-
-    query_path = Path("sql") / "query1.txt"
-    query = query_path.read_text(encoding="utf-8")
-
-    df = pd.read_sql(query, conn)
-    print(f"Registros extraídos: {len(df)}")
+def load_data():
+    path = Path("data") / "dataset_v2.csv"
+    df = pd.read_csv(path, encoding="utf-8")
+    print(f"Dataset cargado: {len(df)} registros")
     return df
 
 
-def save_dataset(df: pd.DataFrame) -> Path:
-    output_dir = Path("data")
-    output_dir.mkdir(exist_ok=True)
+def train_model(df):
+    print("Entrenando modelo...")
 
-    output_path = output_dir / "dataset_v2.csv"
-    df.to_csv(output_path, index=False, encoding="utf-8-sig")
+    # Ajusta este campo si tu columna de texto tiene otro nombre
+    text_column = "Descripcion"
 
-    print("Dataset guardado en:", output_path)
-    return output_path
+    texts = df[text_column].fillna("").astype(str)
+
+    vectorizer = TfidfVectorizer(max_features=2000)
+    X = vectorizer.fit_transform(texts)
+
+    model = KMeans(n_clusters=8, random_state=42)
+    model.fit(X)
+
+    return model, vectorizer
 
 
-def main() -> None:
-    df = extract_from_sql()
-    save_dataset(df)
-    print("Pipeline V2 finalizado correctamente.")
+def save_model(model, vectorizer):
+    models_dir = Path("models")
+    models_dir.mkdir(exist_ok=True)
+
+    model_path = models_dir / "kmeans_model.pkl"
+    vect_path = models_dir / "vectorizer.pkl"
+
+    pd.to_pickle(model, model_path)
+    pd.to_pickle(vectorizer, vect_path)
+
+    print("Modelo guardado en:", model_path)
+    print("Vectorizador guardado en:", vect_path)
+
+
+def main():
+    mlflow.set_experiment("softland_hw_v2")
+
+    with mlflow.start_run():
+        df = load_data()
+        model, vectorizer = train_model(df)
+
+        save_model(model, vectorizer)
+
+        mlflow.log_param("modelo", "KMeans")
+        mlflow.log_param("clusters", 8)
+        mlflow.log_param("max_features", 2000)
+
+        print("Entrenamiento finalizado y registrado en MLflow.")
 
 
 if __name__ == "__main__":
     main()
-
-
